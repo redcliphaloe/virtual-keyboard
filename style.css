@@ -16,6 +16,7 @@ body {
     height: 50%;
     font-size: min(1.82vw, 4.16vh);
     resize: none;
+    outline: none;
 }
 
 .keyboard {
