@@ -82,7 +82,6 @@ hint2.className = 'hint';
 hint2.innerHTML = 'Created in Windows 10 OS';
 document.body.append(hint2);
 
-let key = '';
 let isShift = false;
 let isCapsLock = false;
 let prevKey = '';
@@ -90,18 +89,118 @@ const LANG_ENG = 0;
 const LANG_RUS = 3;
 let lang = +localStorage.getItem('lang');
 
-for (const key in keyboardSpec) {
-    if (keyboardSpec.hasOwnProperty(key)) {
-        const value = keyboardSpec[key];
-        const charCode = value[0 + lang];
-        const widthKoef = value[6];
-        const altName = value[7];
-        const button = document.createElement('button');
-        button.className = 'button';
-        button.id = key;
-        button.innerHTML = altName ? altName : String.fromCharCode(charCode);
-        button.style.height = 'calc((100% - 50px) / 5)';
-        button.style.width = 'calc((100% - 150px) / 15 * ' + widthKoef + ' + (' + widthKoef + ' - 1) * 10px)';
-        keyboard.append(button);
-    }
+class Button {
+  constructor(key, lng) {
+    const value = keyboardSpec[key];
+    const charCode = value[0 + lng];
+    const widthKoef = value[6];
+    const altName = value[7];
+    this.button = document.createElement('button');
+    this.button.className = 'button';
+    this.button.id = key;
+    this.button.innerHTML = altName || String.fromCharCode(charCode);
+    this.button.style.height = 'calc((100% - 50px) / 5)';
+    this.button.style.width = `calc((100% - 150px) / 15 * ${widthKoef} + (${widthKoef} - 1) * 10px)`;
+  }
 }
+
+Object.keys(keyboardSpec).forEach((key) => {
+  if (Object.prototype.hasOwnProperty.call(keyboardSpec, key)) {
+    keyboard.append((new Button(key, lang)).button);
+  }
+});
+
+const buttons = document.querySelectorAll('.button');
+
+function activeKey(key) {
+  if (((key !== 'ShiftLeft') || (key !== 'ShiftRight')) && ((prevKey === 'AltLeft') || (prevKey === 'AltRight'))) {
+    document.querySelector(`#${prevKey}`).classList.remove('button--active');
+  }
+  if (Object.prototype.hasOwnProperty.call(keyboardSpec, key) && key !== 'CapsLock'
+    && key !== 'ShiftLeft' && key !== 'ShiftRight' && key !== 'AltLeft' && key !== 'AltRight') {
+    const button = document.querySelector(`#${key}`);
+    button.classList.toggle('button--active');
+    setTimeout(() => {
+      button.classList.toggle('button--active');
+    }, 100);
+    if (keyboardSpec[key][7] === '') {
+      textarea.setRangeText(button.innerHTML, textarea.selectionStart, textarea.selectionEnd);
+      textarea.selectionStart += 1;
+    }
+    if (key === 'Backspace') {
+      textarea.setRangeText('', textarea.selectionStart - 1, textarea.selectionEnd);
+    }
+    if (key === 'Tab') {
+      textarea.setRangeText('\t', textarea.selectionStart, textarea.selectionEnd);
+      textarea.selectionStart += 1;
+    }
+    if (key === 'Delete') {
+      textarea.setRangeText('', textarea.selectionStart, textarea.selectionEnd + 1);
+    }
+    if (key === 'Enter') {
+      textarea.setRangeText('\n', textarea.selectionStart, textarea.selectionEnd);
+      textarea.selectionStart += 1;
+    }
+    if (key === 'ArrowUp') {
+      textarea.value += '▲';
+    }
+    if (key === 'ArrowLeft') {
+      textarea.selectionEnd -= 1;
+    }
+    if (key === 'ArrowDown') {
+      textarea.value += '▼';
+    }
+    if (key === 'ArrowRight') {
+      textarea.selectionEnd += 1;
+    }
+    textarea.focus();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(keyboardSpec, key) && (key === 'CapsLock'
+    || key === 'ShiftLeft' || key === 'ShiftRight' || key === 'AltLeft' || key === 'AltRight')) {
+    const button = document.querySelector(`#${key}`);
+    button.classList.toggle('button--active');
+    if (((key === 'ShiftLeft') || (key === 'ShiftRight')) && ((prevKey === 'AltLeft') || (prevKey === 'AltRight'))) {
+      lang = lang ? LANG_ENG : LANG_RUS;
+      localStorage.removeItem('lang');
+      localStorage.setItem('lang', lang);
+      document.querySelector(`#${prevKey}`).classList.remove('button--active');
+      setTimeout(() => {
+        button.classList.toggle('button--active');
+      }, 100);
+      isShift = !isShift;
+    }
+    if (key === 'CapsLock') {
+      isCapsLock = !isCapsLock;
+    }
+    if ((key === 'ShiftLeft') || (key === 'ShiftRight')) {
+      isShift = !isShift;
+    }
+
+    buttons.forEach((e) => {
+      const value = keyboardSpec[e.id];
+      let charCode = value[0 + lang];
+      if (isCapsLock) {
+        charCode = value[2 + lang];
+      }
+      if (isShift) {
+        charCode = value[1 + lang];
+      }
+      const altName = value[7];
+      const btn = e;
+      btn.innerHTML = altName || String.fromCharCode(charCode);
+    });
+  }
+  prevKey = key;
+}
+
+document.addEventListener('keydown', (e) => {
+  e.preventDefault();
+  activeKey(e.code);
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') {
+    activeKey(e.target.id);
+  }
+});
