@@ -123,7 +123,7 @@ function activeKey(key) {
     setTimeout(() => {
       button.classList.toggle('button--active');
     }, 100);
-    if (keyboardSpec[key][7] === '') {
+    if (keyboardSpec[key][7] === '' || key === 'ArrowUp' || key === 'ArrowDown') {
       textarea.setRangeText(button.innerHTML, textarea.selectionStart, textarea.selectionEnd);
       textarea.selectionStart += 1;
     }
@@ -141,17 +141,13 @@ function activeKey(key) {
       textarea.setRangeText('\n', textarea.selectionStart, textarea.selectionEnd);
       textarea.selectionStart += 1;
     }
-    if (key === 'ArrowUp') {
-      textarea.value += '▲';
-    }
     if (key === 'ArrowLeft') {
-      textarea.selectionEnd -= 1;
-    }
-    if (key === 'ArrowDown') {
-      textarea.value += '▼';
+      textarea.selectionStart -= 1;
+      textarea.selectionEnd = textarea.selectionStart;
     }
     if (key === 'ArrowRight') {
-      textarea.selectionEnd += 1;
+      textarea.selectionStart += 1;
+      textarea.selectionEnd = textarea.selectionStart;
     }
     textarea.focus();
   }
